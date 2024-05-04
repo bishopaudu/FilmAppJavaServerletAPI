@@ -26,9 +26,16 @@ public class RestApi extends HttpServlet {
     public RestApi() {
         this.filmDAO = new FilmDAO();
     }
+    
+    /*private void setCorsHeaders(HttpServletResponse response) {
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        response.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+        response.addHeader("Access-Control-Allow-Headers", "Content-Type");
+    }*/
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
+ 
 
         if (pathInfo == null || pathInfo.equals("/")) {
             // get all films
@@ -40,7 +47,7 @@ public class RestApi extends HttpServlet {
                 response.getWriter().println("Internal Server Error");
             }
         } else {
-            // Retrieve a film by ID
+            // get film by ID
             String[] parts = pathInfo.split("/");
             if (parts.length != 2 || !parts[1].matches("\\d+")) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -56,7 +63,7 @@ public class RestApi extends HttpServlet {
                 return;
             }
 
-            // Check the Accept header to determine the response format
+            // Checking the Accept header 
             String acceptHeader = request.getHeader("Accept");
             if (acceptHeader != null) {
                 if (acceptHeader.contains("application/xml")) {
@@ -81,7 +88,7 @@ public class RestApi extends HttpServlet {
                     response.getWriter().println("Unsupported response format");
                 }
             } else {
-                // No Accept header provided, return JSON by default
+                // Returns JSON By default
                 Gson gson = new Gson();
                 String jsonFilm = gson.toJson(film);
                 response.setContentType("application/json");
@@ -91,15 +98,11 @@ public class RestApi extends HttpServlet {
     }
     
     private String generateXmlResponse(Film films2) {
-        // Retrieve films from DAO
         ArrayList<Film> films = filmDAO.getAllFilms();
-
-        // Start building the XML response
+        // build XML response
         StringBuilder xmlResponse = new StringBuilder();
         xmlResponse.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xmlResponse.append("<films>\n");
-
-        // Iterate over each film and add XML elements
         for (Film film1 : films) {
             xmlResponse.append("  <film>\n");
             xmlResponse.append("    <id>").append(film1.getId()).append("</id>\n");
@@ -110,25 +113,17 @@ public class RestApi extends HttpServlet {
             xmlResponse.append("    <review>").append(film1.getReview()).append("</review>\n");
             xmlResponse.append("  </film>\n");
         }
-
-        // Close the films element
         xmlResponse.append("</films>");
 
         return xmlResponse.toString();
     }
-
-
-
+    
     private String generateXmlResponseAllFilm(ArrayList<Film> films2) {
         // Retrieve films from DAO
         ArrayList<Film> films = filmDAO.getAllFilms();
-
-        // Start building the XML response
         StringBuilder xmlResponse = new StringBuilder();
         xmlResponse.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xmlResponse.append("<films>\n");
-
-        // Iterate over each film and add XML elements
         for (Film film1 : films) {
             xmlResponse.append("  <film>\n");
             xmlResponse.append("    <id>").append(film1.getId()).append("</id>\n");
@@ -139,14 +134,12 @@ public class RestApi extends HttpServlet {
             xmlResponse.append("    <review>").append(film1.getReview()).append("</review>\n");
             xmlResponse.append("  </film>\n");
         }
-
-        // Close the films element
         xmlResponse.append("</films>");
-
         return xmlResponse.toString();
     }
+    
     private String generatePlainTextResponse(Film film) {
-        // Build plain text response
+        // create plain text response
         StringBuilder plainTextResponse = new StringBuilder();
         plainTextResponse.append("Film ID: ").append(film.getId()).append("\n");
         plainTextResponse.append("Title: ").append(film.getTitle()).append("\n");
@@ -156,10 +149,9 @@ public class RestApi extends HttpServlet {
         plainTextResponse.append("Review: ").append(film.getReview()).append("\n");
         return plainTextResponse.toString();
     }
-
     
     private String generatePlainTextResponseAllFilm(ArrayList<Film> films) {
-        // Build plain text response
+        //create plain text response
         StringBuilder plainTextResponse = new StringBuilder();
         
         for (Film film : films) {
@@ -271,12 +263,12 @@ public class RestApi extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().println("No films found");
         } else {
-            // Check the Accept header to determine the response format
+            // Check the Accept header for content negotiation
             String acceptHeader = request.getHeader("Accept");
             if (acceptHeader != null) {
                 if (acceptHeader.contains("application/xml")) {
                     // Generate XML response
-                    String xmlResponse = generateXmlResponseAllFilm(films);
+                    String xmlResponse =  generateXmlResponseAllFilm(films);
                     response.setContentType("application/xml");
                     response.getWriter().println(xmlResponse);
                 } else if (acceptHeader.contains("application/json")) {
@@ -331,21 +323,21 @@ public class RestApi extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().println("Film not found");
         } else {
-            // Extract updated attributes from the updatedFilm object
+           
             String title = updatedFilm.getTitle();
             int year = updatedFilm.getYear();
             String director = updatedFilm.getDirector();
             String stars = updatedFilm.getStars();
             String review = updatedFilm.getReview();
 
-            // Update the existing film with the new attributes
+            // Update the existing film 
             existingFilm.setTitle(title);
             existingFilm.setYear(year);
             existingFilm.setDirector(director);
             existingFilm.setStars(stars);
             existingFilm.setReview(review);
 
-            // Update the film in the database
+            // Update the film in the db
             filmDAO.updateFilmById(id, title, year, director, review);
 
             response.setStatus(HttpServletResponse.SC_OK);
