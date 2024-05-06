@@ -112,17 +112,22 @@ public class FilmDAO {
    public Film addFilm( Film film){
 		openConnection();
 		try{
-			String insertSQL= "INSERT INTO films (title, year, director, stars, review) VALUES (?, ?, ?, ?, ?)";
+			String insertSQL= "INSERT INTO films (id,title, year, director, stars, review) VALUES (?, ?, ?, ?, ?, ?)";
 			//ResultSet rs1 = stmt.executeQuery(inserySQL);
+			long currentTimeMillis = System.currentTimeMillis();
+			int lastFiveDigits = (int) (currentTimeMillis % 100000);
+			int id = Integer.parseInt(String.format("%05d", lastFiveDigits));
+			film.setId(id);
 			PreparedStatement preparedStatement = conn.prepareStatement(insertSQL);
-			preparedStatement.setString(1,film.getTitle());
-			preparedStatement.setInt(2,film.getYear());
-			preparedStatement.setString(3,film.getDirector());
-			preparedStatement.setString(4,film.getStars());
-			preparedStatement.setString(5,film.getReview());
+			preparedStatement.setInt(1, film.getId());
+			preparedStatement.setString(2,film.getTitle());
+			preparedStatement.setInt(3,film.getYear());
+			preparedStatement.setString(4,film.getDirector());
+			preparedStatement.setString(5,film.getStars());
+			preparedStatement.setString(6,film.getReview());
 			int rowsAffected = preparedStatement.executeUpdate();
 			if (rowsAffected > 0){
-				System.out.print("now rows affected");
+				System.out.print("no rows affected");
 			} else {
 				System.out.print("failed to add new film");
 			}
@@ -188,4 +193,35 @@ public class FilmDAO {
 	        closeConnection();
 	    }
 	}
+   
+   public Film getFilmByTitle(String title) {
+	    openConnection();
+	    Film film = null;
+	    try {
+	        String selectSQL = "SELECT * FROM films WHERE title=?";
+	        PreparedStatement preparedStatement = conn.prepareStatement(selectSQL);
+	        preparedStatement.setString(1, title);
+	        ResultSet rs = preparedStatement.executeQuery();
+	        
+	        if (rs.next()) {
+	            film = new Film(
+	                    rs.getInt("id"),
+	                    rs.getString("title"),
+	                    rs.getInt("year"),
+	                    rs.getString("director"),
+	                    rs.getString("stars"),
+	                    rs.getString("review"));
+	        }
+	        
+	        rs.close();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    } finally {
+	        closeConnection();
+	    }
+	    return film;
+	}
+
 }
+
+
