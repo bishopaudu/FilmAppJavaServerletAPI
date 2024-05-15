@@ -172,26 +172,6 @@ public class RestApi extends HttpServlet {
         return plainTextResponse.toString();
     }
     
-    private void searchByTitle(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String title = request.getParameter("title");
-        Film film = filmDAO.getFilmByTitle(title);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        if (film != null) {
-            // If a film with the given title is found, return its details as JSON
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String jsonFilm = gson.toJson(film);
-            out.print(jsonFilm);
-            out.flush();
-        } else {
-            // If no film is found, return a JSON object indicating that the film was not found
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("error", "Film not found");
-            out.print(jsonObject.toString());
-            out.flush();
-        }
-    }
 
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -407,7 +387,7 @@ public class RestApi extends HttpServlet {
                 response.setContentType("application/json");
                 response.getWriter().println(jsonFilm);
             } else if (acceptHeader.contains("text/plain")) {
-                // Generate plain text response
+                // Generatetext response
                 String plainTextResponse = generatePlainTextResponse(film);
                 response.setContentType("text/plain");
                 response.getWriter().println(plainTextResponse);
