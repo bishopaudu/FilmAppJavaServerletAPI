@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
+import com.google.gson.JsonObject;
 
 import net.api.FilmDAO.FilmDAO;
 import net.api.film.Film;
@@ -30,10 +30,19 @@ public class RestApi extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
- 
+        String title = request.getParameter("title"); // Get the title parameter
 
-        if (pathInfo == null || pathInfo.equals("/")) {
-            // get all films
+        if (title != null && !title.isEmpty()) {
+            // Search film by title
+            try {
+                searchByTitle(request, response, title);
+            } catch (SQLException e) {
+                e.printStackTrace();
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().println("Internal Server Error");
+            }
+        } else if (pathInfo == null || pathInfo.equals("/")) {
+            // Get all films
             try {
                 listAllFilms(request, response);
             } catch (SQLException e) {
@@ -42,7 +51,7 @@ public class RestApi extends HttpServlet {
                 response.getWriter().println("Internal Server Error");
             }
         } else {
-            // get film by ID
+            // Get film by ID
             String[] parts = pathInfo.split("/");
             if (parts.length != 2 || !parts[1].matches("\\d+")) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -91,6 +100,7 @@ public class RestApi extends HttpServlet {
             }
         }
     }
+
     
     private String generateXmlResponse(Film films2) {
         ArrayList<Film> films = filmDAO.getAllFilms();
@@ -160,6 +170,27 @@ public class RestApi extends HttpServlet {
         }
         
         return plainTextResponse.toString();
+    }
+    
+    private void searchByTitle(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String title = request.getParameter("title");
+        Film film = filmDAO.getFilmByTitle(title);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+        if (film != null) {
+            // If a film with the given title is found, return its details as JSON
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String jsonFilm = gson.toJson(film);
+            out.print(jsonFilm);
+            out.flush();
+        } else {
+            // If no film is found, return a JSON object indicating that the film was not found
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("error", "Film not found");
+            out.print(jsonObject.toString());
+            out.flush();
+        }
     }
 
 
@@ -332,7 +363,7 @@ public class RestApi extends HttpServlet {
             existingFilm.setStars(stars);
             existingFilm.setReview(review);
 
-            // Update the film in the db
+            // Update the film in the database
             filmDAO.updateFilmById(id, title, year, director, review);
 
             response.setStatus(HttpServletResponse.SC_OK);
@@ -352,4 +383,46 @@ public class RestApi extends HttpServlet {
             response.getWriter().println("Film deleted successfully");
         }
     }
+    
+    private void searchByTitle(HttpServletRequest request, HttpServletResponse response, String title) throws SQLException, IOException {
+        Film film = filmDAO.getFilmByTitle(title);
+        if (film == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.getWriter().println("Film not found");
+            return;
+        }
+
+        // Check the Accept header for content negotiation
+        String acceptHeader = request.getHeader("Accept");
+        if (acceptHeader != null) {
+            if (acceptHeader.contains("application/xml")) {
+                // Generate XML response
+                String xmlResponse = generateXmlResponse(film);
+                response.setContentType("application/xml");
+                response.getWriter().println(xmlResponse);
+            } else if (acceptHeader.contains("application/json")) {
+                // Generate JSON response
+                Gson gson = new Gson();
+                String jsonFilm = gson.toJson(film);
+                response.setContentType("application/json");
+                response.getWriter().println(jsonFilm);
+            } else if (acceptHeader.contains("text/plain")) {
+                // Generate plain text response
+                String plainTextResponse = generatePlainTextResponse(film);
+                response.setContentType("text/plain");
+                response.getWriter().println(plainTextResponse);
+            } else {
+                // Unsupported format
+                response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
+                response.getWriter().println("Unsupported response format");
+            }
+        } else {
+            // No Accept header provided, return JSON by default
+            Gson gson = new Gson();
+            String jsonFilm = gson.toJson(film);
+            response.setContentType("application/json");
+            response.getWriter().println(jsonFilm);
+        }
+    }
+
 }

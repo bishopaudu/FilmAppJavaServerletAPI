@@ -16,16 +16,16 @@ public class FilmDAO {
 	Film oneFilm = null;
 	Connection conn = null;
     Statement stmt = null;
-	String user = "adeyemoy";
+	/*String user = "adeyemoy";
     String password = "quIsreng4";
-    // Note none default port used, 6306 not 3306
-    String url = "jdbc:mysql://mudfoot.doc.stu.mmu.ac.uk:6306/"+user;
-    
-   // String testUrl = "com.mysql.jdbc.Driver";
-
-
-
-	
+    String url = "jdbc:mysql://mudfoot.doc.stu.mmu.ac.uk:6306/"+user;*/
+    /*
+     * Using cloud based mysql for testing 
+     * */
+    String user = "adeyemoymmu";
+    String password = "yetundemmu";
+    String url ="jdbc:mysql://awseb-e-usup6ktgea-stack-awsebrdsdatabase-kudt7rpnjpwr.c5qeeemoijfd.eu-north-1.rds.amazonaws.com:3306/ebdb";
+ 
 	private void openConnection(){
 		// loading jdbc driver for mysql
 		try{
